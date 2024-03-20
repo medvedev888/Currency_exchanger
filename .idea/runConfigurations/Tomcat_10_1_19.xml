@@ -1,9 +1,20 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Tomcat 10.1.19" type="#com.intellij.j2ee.web.tomcat.TomcatRunConfigurationFactory" factoryName="Local" APPLICATION_SERVER_NAME="Tomcat 10.1.19" ALTERNATIVE_JRE_ENABLED="false" nameIsGenerated="true">
     <option name="UPDATING_POLICY" value="restart-server" />
-    <deployment />
+    <deployment>
+      <artifact name="Gradle : me.vladislav : Currency_exchanger-1.0-SNAPSHOT.war">
+        <settings>
+          <option name="CONTEXT_PATH" value="/Gradle___me_vladislav___Currency_exchanger_1_0_SNAPSHOT_war" />
+        </settings>
+      </artifact>
+      <artifact name="Gradle : me.vladislav : Currency_exchanger-1.0-SNAPSHOT.war (exploded)">
+        <settings>
+          <option name="CONTEXT_PATH" value="/Gradle___me_vladislav___Currency_exchanger_1_0_SNAPSHOT_war__exploded_" />
+        </settings>
+      </artifact>
+    </deployment>
     <server-settings>
-      <option name="BASE_DIRECTORY_NAME" value="4ffbbcd3-c9a2-4da0-950b-58db7bf77043" />
+      <option name="BASE_DIRECTORY_NAME" value="33acfca1-7c2c-48a4-8106-ea7f259e22cc" />
     </server-settings>
     <predefined_log_file enabled="true" id="Tomcat" />
     <predefined_log_file enabled="true" id="Tomcat Catalina" />
@@ -11,7 +22,7 @@
     <predefined_log_file id="Tomcat Host Manager" />
     <predefined_log_file id="Tomcat Localhost Access" />
     <RunnerSettings RunnerId="Debug">
-      <option name="DEBUG_PORT" value="52851" />
+      <option name="DEBUG_PORT" value="53358" />
     </RunnerSettings>
     <ConfigurationWrapper VM_VAR="JAVA_OPTS" RunnerId="Cover">
       <option name="USE_ENV_VARIABLES" value="true" />
