@@ -1,4 +1,4 @@
-package me.vladislav.currency_exchanger.model;
+package me.vladislav.currency_exchanger.models;
 
 import java.util.Objects;
 
