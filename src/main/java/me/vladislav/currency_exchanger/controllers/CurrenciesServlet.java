@@ -18,7 +18,8 @@ public class CurrenciesServlet extends HttpServlet {
     private final ObjectMapper objectMapper;
 
     public CurrenciesServlet() {
-        this.currencyDataAccessObject = new CurrencyDataAccessObject("jdbc:postgresql://localhost:5432/currency_exchanger", "", "");
+        // данные для подключения к БД - временная заглушка
+        this.currencyDataAccessObject = new CurrencyDataAccessObject("jdbc:postgresql://localhost:5432/currency_exchanger", "vladislavmedvedev", "");
         this.objectMapper = new ObjectMapper();
         this.objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
     }
