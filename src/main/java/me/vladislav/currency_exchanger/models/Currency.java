@@ -1,11 +1,17 @@
 package me.vladislav.currency_exchanger.models;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Objects;
 
 public class Currency {
+    @JsonProperty(required = true)
     private int id;
+    @JsonProperty(required = true)
     private String code;
+    @JsonProperty(required = true)
     private String fullName;
+    @JsonProperty(required = true)
     private String sign;
 
     public Currency(int id, String code, String fullName, String sign){

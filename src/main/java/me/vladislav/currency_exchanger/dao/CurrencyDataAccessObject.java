@@ -4,20 +4,33 @@ import me.vladislav.currency_exchanger.exceptions.DataAccessException;
 import me.vladislav.currency_exchanger.exceptions.DriverInitializationException;
 import me.vladislav.currency_exchanger.exceptions.NoConnectionToDataBaseException;
 import me.vladislav.currency_exchanger.models.Currency;
+import org.apache.commons.dbcp2.BasicDataSource;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class CurrencyDataAccessObject implements DataAccessObject<Currency> {
+    private BasicDataSource dataSource;
+
+    public CurrencyDataAccessObject(String url, String username, String password) {
+        dataSource = new BasicDataSource();
+        dataSource.setUrl(url);
+        dataSource.setUsername(username);
+        dataSource.setPassword(password);
+    }
 
     public List<Currency> getList() throws DataAccessException {
         try {
+
             List<Currency> listOfCurrencies = new ArrayList<>();
-            initializeDriverForJDBC();
-            Connection connection = getConnection();
             String query = "SELECT * FROM currencies;";
-            try (PreparedStatement preparedStatement = connection.prepareStatement(query); ResultSet resultSet = preparedStatement.executeQuery()) {
+            initializeDriverForJDBC();
+
+            try (Connection connection = getConnection();
+                 PreparedStatement preparedStatement = connection.prepareStatement(query);
+                 ResultSet resultSet = preparedStatement.executeQuery()) {
+
                 while (resultSet.next()) {
                     int id = resultSet.getInt("id");
                     String code = resultSet.getString("code");
@@ -25,9 +38,10 @@ public class CurrencyDataAccessObject implements DataAccessObject<Currency> {
                     String sign = resultSet.getString("sign");
                     listOfCurrencies.add(new Currency(id, code, fullName, sign));
                 }
+
             }
             return listOfCurrencies;
-        } catch (SQLException e) {
+        } catch (SQLException | DriverInitializationException | NoConnectionToDataBaseException e) {
             throw new DataAccessException("Error retrieving currency list", e);
         }
     }
@@ -49,7 +63,7 @@ public class CurrencyDataAccessObject implements DataAccessObject<Currency> {
 
     private Connection getConnection() throws NoConnectionToDataBaseException {
         try {
-            Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/currency_exchanger", "vladislavmedvedev", "");
+            Connection connection = dataSource.getConnection();
             return connection;
         } catch (SQLException e) {
             throw new NoConnectionToDataBaseException("Connection to the database could not be established", e);

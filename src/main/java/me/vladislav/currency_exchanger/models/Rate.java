@@ -1,12 +1,18 @@
 package me.vladislav.currency_exchanger.models;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.math.BigDecimal;
 import java.util.Objects;
 
 public class Rate {
+    @JsonProperty(required = true)
     private int id;
+    @JsonProperty(required = true)
     private int baseCurrencyId;
+    @JsonProperty(required = true)
     private int targetCurrencyId;
+    @JsonProperty(required = true)
     private BigDecimal rate;
 
     public Rate(int id, int baseCurrencyId, int targetCurrencyId, BigDecimal rate){

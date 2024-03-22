@@ -7,18 +7,29 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import me.vladislav.currency_exchanger.dao.CurrencyDataAccessObject;
+import me.vladislav.currency_exchanger.exceptions.DataAccessException;
 
 import java.io.IOException;
 import java.sql.SQLException;
 
 @WebServlet(value = "/currencies")
 public class CurrenciesServlet extends HttpServlet {
+    private final CurrencyDataAccessObject currencyDataAccessObject;
+    private final ObjectMapper objectMapper;
+
+    public CurrenciesServlet() {
+        this.currencyDataAccessObject = new CurrencyDataAccessObject("jdbc:postgresql://localhost:5432/currency_exchanger", "", "");
+        this.objectMapper = new ObjectMapper();
+        this.objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+    }
+
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        CurrencyDataAccessObject currencyDataAccessObject = new CurrencyDataAccessObject();
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
-        String json = objectMapper.writeValueAsString(currencyDataAccessObject.getList());
-        resp.getWriter().write(json);
+        try {
+            String json = objectMapper.writeValueAsString(currencyDataAccessObject.getList());
+            resp.getWriter().write(json);
+        } catch (DataAccessException e) {
+            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database interaction error (" + e.getMessage() + ")");
+        }
     }
 }
