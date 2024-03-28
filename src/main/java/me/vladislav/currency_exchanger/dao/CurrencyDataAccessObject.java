@@ -1,9 +1,6 @@
 package me.vladislav.currency_exchanger.dao;
 
-import me.vladislav.currency_exchanger.exceptions.CurrencyNotFoundException;
-import me.vladislav.currency_exchanger.exceptions.DataAccessException;
-import me.vladislav.currency_exchanger.exceptions.DriverInitializationException;
-import me.vladislav.currency_exchanger.exceptions.NoConnectionToDataBaseException;
+import me.vladislav.currency_exchanger.exceptions.*;
 import me.vladislav.currency_exchanger.models.Currency;
 import org.apache.commons.dbcp2.BasicDataSource;
 
@@ -74,8 +71,29 @@ public class CurrencyDataAccessObject implements DataAccessObject<Currency> {
     }
 
     @Override
-    public void add(Currency currency) {
+    public void add(String fullname, String code, String sign) throws DataAccessException, CurrencyCodeAlreadyExistsException {
+        try {
+            initializeDriverForJDBC();
+            String query = "SELECT * FROM currencies WHERE code = '" + code + "';";
+            String requestToAddAnElement = "INSERT INTO currencies (code, fullname, sign) VALUES (?, ?, ?)";
 
+            try (Connection connection = getConnection();
+                 PreparedStatement preparedStatement1 = connection.prepareStatement(query);
+                 ResultSet resultSet1 = preparedStatement1.executeQuery()) {
+                if(!resultSet1.next()) {
+                    try(PreparedStatement preparedStatement2 = connection.prepareStatement(requestToAddAnElement)){
+                        preparedStatement2.setString(1, code);
+                        preparedStatement2.setString(2, fullname);
+                        preparedStatement2.setString(3, sign);
+                        preparedStatement2.executeUpdate();
+                    }
+                } else {
+                    throw new CurrencyCodeAlreadyExistsException("A currency with this code already exists");
+                }
+            }
+        } catch (SQLException | DriverInitializationException | NoConnectionToDataBaseException e) {
+            throw new DataAccessException("Error retrieving currency", e);
+        }
     }
 
     @Override
