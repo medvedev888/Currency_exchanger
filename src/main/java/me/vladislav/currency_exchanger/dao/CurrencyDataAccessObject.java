@@ -1,5 +1,6 @@
 package me.vladislav.currency_exchanger.dao;
 
+import me.vladislav.currency_exchanger.exceptions.CurrencyNotFoundException;
 import me.vladislav.currency_exchanger.exceptions.DataAccessException;
 import me.vladislav.currency_exchanger.exceptions.DriverInitializationException;
 import me.vladislav.currency_exchanger.exceptions.NoConnectionToDataBaseException;
@@ -22,7 +23,6 @@ public class CurrencyDataAccessObject implements DataAccessObject<Currency> {
 
     public List<Currency> getList() throws DataAccessException {
         try {
-
             List<Currency> listOfCurrencies = new ArrayList<>();
             String query = "SELECT * FROM currencies;";
             initializeDriverForJDBC();
@@ -47,8 +47,30 @@ public class CurrencyDataAccessObject implements DataAccessObject<Currency> {
     }
 
     @Override
-    public Currency getByID(int id) {
-        return null;
+    public Currency getByCode(String code) throws DataAccessException, CurrencyNotFoundException {
+        try {
+            Currency result;
+            initializeDriverForJDBC();
+            String query = "SELECT * FROM currencies WHERE code = '" + code + "';";
+
+            try (Connection connection = getConnection();
+                 PreparedStatement preparedStatement = connection.prepareStatement(query);
+                 ResultSet resultSet = preparedStatement.executeQuery()) {
+                if(resultSet.next()) {
+                    int id = resultSet.getInt("id");
+                    resultSet.getString("code");
+                    String fullName = resultSet.getString("fullName");
+                    String sign = resultSet.getString("sign");
+                    result = new Currency(id, code, fullName, sign);
+                } else {
+                    throw new CurrencyNotFoundException("Currency with code '" + code + "' not found");
+                }
+                return result;
+            }
+
+        } catch (SQLException | DriverInitializationException | NoConnectionToDataBaseException e) {
+            throw new DataAccessException("Error retrieving currency", e);
+        }
     }
 
     @Override
