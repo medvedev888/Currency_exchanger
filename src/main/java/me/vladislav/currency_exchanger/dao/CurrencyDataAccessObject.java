@@ -71,8 +71,12 @@ public class CurrencyDataAccessObject implements DataAccessObject<Currency> {
     }
 
     @Override
-    public void add(String fullname, String code, String sign) throws DataAccessException, CurrencyCodeAlreadyExistsException {
+    public void add(Currency currency) throws DataAccessException, CurrencyCodeAlreadyExistsException {
         try {
+            String code = currency.getCode();
+            String fullname = currency.getFullName();
+            String sign = currency.getSign();
+
             initializeDriverForJDBC();
             String query = "SELECT * FROM currencies WHERE code = '" + code + "';";
             String requestToAddAnElement = "INSERT INTO currencies (code, fullname, sign) VALUES (?, ?, ?)";

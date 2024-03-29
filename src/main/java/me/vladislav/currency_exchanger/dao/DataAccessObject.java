@@ -10,6 +10,6 @@ import java.util.List;
 public interface DataAccessObject<T> {
     public List<T> getList() throws DataAccessException;
     public T getByCode(String code) throws DataAccessException, CurrencyNotFoundException;
-    public void add(String fullname, String code, String sign) throws DataAccessException, CurrencyCodeAlreadyExistsException;
+    public void add(T t) throws DataAccessException, CurrencyCodeAlreadyExistsException;
     public void update();
 }

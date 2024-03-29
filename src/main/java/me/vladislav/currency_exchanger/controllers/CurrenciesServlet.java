@@ -10,6 +10,7 @@ import me.vladislav.currency_exchanger.dao.CurrencyDataAccessObject;
 import me.vladislav.currency_exchanger.exceptions.CurrencyCodeAlreadyExistsException;
 import me.vladislav.currency_exchanger.exceptions.CurrencyNotFoundException;
 import me.vladislav.currency_exchanger.exceptions.DataAccessException;
+import me.vladislav.currency_exchanger.models.Currency;
 
 import java.io.IOException;
 
@@ -43,7 +44,7 @@ public class CurrenciesServlet extends HttpServlet {
             String code = req.getParameter("code");
             String sign = req.getParameter("sign");
             if(fullname != null && code != null && sign != null && code.length() == 3){
-                currencyDataAccessObject.add(fullname, code, sign);
+                currencyDataAccessObject.add(new Currency(code, fullname, sign));
                 resp.setStatus(HttpServletResponse.SC_CREATED);
                 try {
                     String json = objectMapper.writeValueAsString(currencyDataAccessObject.getByCode(code));
