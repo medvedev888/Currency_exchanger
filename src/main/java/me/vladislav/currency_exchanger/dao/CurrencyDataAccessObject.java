@@ -51,18 +51,20 @@ public class CurrencyDataAccessObject implements DataAccessObject<Currency> {
         try {
             Currency result;
             databaseUtils.initializeDriverForJDBC();
-            String query = "SELECT * FROM currencies WHERE id = '" + id + "';";
+            String query = "SELECT * FROM currencies WHERE id = ?;";
 
             try (Connection connection = databaseUtils.getConnection();
-                 PreparedStatement preparedStatement = connection.prepareStatement(query);
-                 ResultSet resultSet = preparedStatement.executeQuery()) {
-                if(resultSet.next()) {
-                    String code = resultSet.getString("code");
-                    String fullName = resultSet.getString("fullName");
-                    String sign = resultSet.getString("sign");
-                    result = new Currency(id, code, fullName, sign);
-                } else {
-                    throw new CurrencyNotFoundException("Currency with id '" + id + "' not found");
+                 PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                preparedStatement.setInt(1, id);
+                try(ResultSet resultSet = preparedStatement.executeQuery()) {
+                    if(resultSet.next()) {
+                        String code = resultSet.getString("code");
+                        String fullName = resultSet.getString("fullName");
+                        String sign = resultSet.getString("sign");
+                        result = new Currency(id, code, fullName, sign);
+                    } else {
+                        throw new CurrencyNotFoundException("Currency with id '" + id + "' not found");
+                    }
                 }
                 return result;
             }
@@ -77,19 +79,21 @@ public class CurrencyDataAccessObject implements DataAccessObject<Currency> {
         try {
             Currency result;
             databaseUtils.initializeDriverForJDBC();
-            String query = "SELECT * FROM currencies WHERE code = '" + code + "';";
+            String query = "SELECT * FROM currencies WHERE code = ?;";
 
             try (Connection connection = databaseUtils.getConnection();
-                 PreparedStatement preparedStatement = connection.prepareStatement(query);
-                 ResultSet resultSet = preparedStatement.executeQuery()) {
-                if(resultSet.next()) {
-                    int id = resultSet.getInt("id");
-                    resultSet.getString("code");
-                    String fullName = resultSet.getString("fullName");
-                    String sign = resultSet.getString("sign");
-                    result = new Currency(id, code, fullName, sign);
-                } else {
-                    throw new CurrencyNotFoundException("Currency with code '" + code + "' not found");
+                 PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                preparedStatement.setString(1, code);
+                try(ResultSet resultSet = preparedStatement.executeQuery()) {
+                    if(resultSet.next()) {
+                        int id = resultSet.getInt("id");
+                        resultSet.getString("code");
+                        String fullName = resultSet.getString("fullName");
+                        String sign = resultSet.getString("sign");
+                        result = new Currency(id, code, fullName, sign);
+                    } else {
+                        throw new CurrencyNotFoundException("Currency with code '" + code + "' not found");
+                    }
                 }
                 return result;
             }
@@ -107,21 +111,23 @@ public class CurrencyDataAccessObject implements DataAccessObject<Currency> {
             String sign = currency.getSign();
 
             databaseUtils.initializeDriverForJDBC();
-            String query = "SELECT * FROM currencies WHERE code = '" + code + "';";
+            String query = "SELECT * FROM currencies WHERE code = ?;";
             String requestToAddAnElement = "INSERT INTO currencies (code, fullname, sign) VALUES (?, ?, ?)";
 
             try (Connection connection = databaseUtils.getConnection();
-                 PreparedStatement preparedStatement1 = connection.prepareStatement(query);
-                 ResultSet resultSet1 = preparedStatement1.executeQuery()) {
-                if(!resultSet1.next()) {
-                    try(PreparedStatement preparedStatement2 = connection.prepareStatement(requestToAddAnElement)){
-                        preparedStatement2.setString(1, code);
-                        preparedStatement2.setString(2, fullname);
-                        preparedStatement2.setString(3, sign);
-                        preparedStatement2.executeUpdate();
+                 PreparedStatement preparedStatement1 = connection.prepareStatement(query)) {
+                preparedStatement1.setString(1, code);
+                try(ResultSet resultSet1 = preparedStatement1.executeQuery()){
+                    if(!resultSet1.next()) {
+                        try(PreparedStatement preparedStatement2 = connection.prepareStatement(requestToAddAnElement)){
+                            preparedStatement2.setString(1, code);
+                            preparedStatement2.setString(2, fullname);
+                            preparedStatement2.setString(3, sign);
+                            preparedStatement2.executeUpdate();
+                        }
+                    } else {
+                        throw new CurrencyCodeAlreadyExistsException("A currency with this code already exists");
                     }
-                } else {
-                    throw new CurrencyCodeAlreadyExistsException("A currency with this code already exists");
                 }
             }
         } catch (SQLException | DriverInitializationException | NoConnectionToDataBaseException e) {
