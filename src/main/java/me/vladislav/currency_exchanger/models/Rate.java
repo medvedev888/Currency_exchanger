@@ -9,16 +9,16 @@ public class Rate {
     @JsonProperty(required = true)
     private int id;
     @JsonProperty(required = true)
-    private int baseCurrencyId;
+    private me.vladislav.currency_exchanger.models.Currency baseCurrency;
     @JsonProperty(required = true)
-    private int targetCurrencyId;
+    private me.vladislav.currency_exchanger.models.Currency targetCurrency;
     @JsonProperty(required = true)
     private BigDecimal rate;
 
-    public Rate(int id, int baseCurrencyId, int targetCurrencyId, BigDecimal rate){
+    public Rate(int id, me.vladislav.currency_exchanger.models.Currency baseCurrency, me.vladislav.currency_exchanger.models.Currency targetCurrency, BigDecimal rate){
         this.id = id;
-        this.baseCurrencyId = baseCurrencyId;
-        this.targetCurrencyId = targetCurrencyId;
+        this.baseCurrency = baseCurrency;
+        this.targetCurrency = targetCurrency;
         this.rate = rate;
     }
 
@@ -30,20 +30,20 @@ public class Rate {
         this.id = id;
     }
 
-    public int getBaseCurrencyId() {
-        return baseCurrencyId;
+    public Currency getBaseCurrency() {
+        return baseCurrency;
     }
 
-    public void setBaseCurrencyId(int baseCurrencyId) {
-        this.baseCurrencyId = baseCurrencyId;
+    public void setBaseCurrency(Currency baseCurrency) {
+        this.baseCurrency = baseCurrency;
     }
 
-    public int getTargetCurrencyId() {
-        return targetCurrencyId;
+    public Currency getTargetCurrency() {
+        return targetCurrency;
     }
 
-    public void setTargetCurrencyId(int targetCurrencyId) {
-        this.targetCurrencyId = targetCurrencyId;
+    public void setTargetCurrency(Currency targetCurrency) {
+        this.targetCurrency = targetCurrency;
     }
 
     public BigDecimal getRate() {
@@ -71,8 +71,8 @@ public class Rate {
     public String toString() {
         return "Rate{" +
                 "id=" + id +
-                ", baseCurrencyId=" + baseCurrencyId +
-                ", targetCurrencyId=" + targetCurrencyId +
+                ", baseCurrency=" + baseCurrency.toString() +
+                ", targetCurrency=" + targetCurrency.toString() +
                 ", rate=" + rate +
                 '}';
     }

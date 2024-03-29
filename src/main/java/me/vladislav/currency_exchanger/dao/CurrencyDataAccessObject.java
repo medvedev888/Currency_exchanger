@@ -2,6 +2,7 @@ package me.vladislav.currency_exchanger.dao;
 
 import me.vladislav.currency_exchanger.exceptions.*;
 import me.vladislav.currency_exchanger.models.Currency;
+import me.vladislav.currency_exchanger.utils.DatabaseUtils;
 import org.apache.commons.dbcp2.BasicDataSource;
 
 import java.sql.*;
@@ -10,21 +11,24 @@ import java.util.List;
 
 public class CurrencyDataAccessObject implements DataAccessObject<Currency> {
     private BasicDataSource dataSource;
+    private DatabaseUtils databaseUtils;
 
     public CurrencyDataAccessObject(String url, String username, String password) {
         dataSource = new BasicDataSource();
         dataSource.setUrl(url);
         dataSource.setUsername(username);
         dataSource.setPassword(password);
+        databaseUtils = new DatabaseUtils(dataSource);
     }
 
+    @Override
     public List<Currency> getList() throws DataAccessException {
         try {
             List<Currency> listOfCurrencies = new ArrayList<>();
             String query = "SELECT * FROM currencies;";
-            initializeDriverForJDBC();
+            databaseUtils.initializeDriverForJDBC();
 
-            try (Connection connection = getConnection();
+            try (Connection connection = databaseUtils.getConnection();
                  PreparedStatement preparedStatement = connection.prepareStatement(query);
                  ResultSet resultSet = preparedStatement.executeQuery()) {
 
@@ -43,14 +47,39 @@ public class CurrencyDataAccessObject implements DataAccessObject<Currency> {
         }
     }
 
+    public Currency getById(int id) throws DataAccessException, CurrencyNotFoundException {
+        try {
+            Currency result;
+            databaseUtils.initializeDriverForJDBC();
+            String query = "SELECT * FROM currencies WHERE id = '" + id + "';";
+
+            try (Connection connection = databaseUtils.getConnection();
+                 PreparedStatement preparedStatement = connection.prepareStatement(query);
+                 ResultSet resultSet = preparedStatement.executeQuery()) {
+                if(resultSet.next()) {
+                    String code = resultSet.getString("code");
+                    String fullName = resultSet.getString("fullName");
+                    String sign = resultSet.getString("sign");
+                    result = new Currency(id, code, fullName, sign);
+                } else {
+                    throw new CurrencyNotFoundException("Currency with id '" + id + "' not found");
+                }
+                return result;
+            }
+
+        } catch (SQLException | DriverInitializationException | NoConnectionToDataBaseException e) {
+            throw new DataAccessException("Error retrieving currency", e);
+        }
+    }
+
     @Override
     public Currency getByCode(String code) throws DataAccessException, CurrencyNotFoundException {
         try {
             Currency result;
-            initializeDriverForJDBC();
+            databaseUtils.initializeDriverForJDBC();
             String query = "SELECT * FROM currencies WHERE code = '" + code + "';";
 
-            try (Connection connection = getConnection();
+            try (Connection connection = databaseUtils.getConnection();
                  PreparedStatement preparedStatement = connection.prepareStatement(query);
                  ResultSet resultSet = preparedStatement.executeQuery()) {
                 if(resultSet.next()) {
@@ -77,11 +106,11 @@ public class CurrencyDataAccessObject implements DataAccessObject<Currency> {
             String fullname = currency.getFullName();
             String sign = currency.getSign();
 
-            initializeDriverForJDBC();
+            databaseUtils.initializeDriverForJDBC();
             String query = "SELECT * FROM currencies WHERE code = '" + code + "';";
             String requestToAddAnElement = "INSERT INTO currencies (code, fullname, sign) VALUES (?, ?, ?)";
 
-            try (Connection connection = getConnection();
+            try (Connection connection = databaseUtils.getConnection();
                  PreparedStatement preparedStatement1 = connection.prepareStatement(query);
                  ResultSet resultSet1 = preparedStatement1.executeQuery()) {
                 if(!resultSet1.next()) {
@@ -105,20 +134,4 @@ public class CurrencyDataAccessObject implements DataAccessObject<Currency> {
 
     }
 
-    private Connection getConnection() throws NoConnectionToDataBaseException {
-        try {
-            Connection connection = dataSource.getConnection();
-            return connection;
-        } catch (SQLException e) {
-            throw new NoConnectionToDataBaseException("Connection to the database could not be established", e);
-        }
-    }
-
-    private void initializeDriverForJDBC() throws DriverInitializationException {
-        try {
-            Class.forName("org.postgresql.Driver");
-        } catch (ClassNotFoundException e) {
-            throw new DriverInitializationException("Failed to initialize JDBC driver", e);
-        }
-    }
 }
