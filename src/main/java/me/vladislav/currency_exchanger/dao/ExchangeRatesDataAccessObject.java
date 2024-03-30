@@ -1,6 +1,7 @@
 package me.vladislav.currency_exchanger.dao;
 
 import me.vladislav.currency_exchanger.exceptions.*;
+import me.vladislav.currency_exchanger.models.Currency;
 import me.vladislav.currency_exchanger.models.Rate;
 import me.vladislav.currency_exchanger.utils.DatabaseUtils;
 import org.apache.commons.dbcp2.BasicDataSource;
@@ -59,7 +60,7 @@ public class ExchangeRatesDataAccessObject implements DataAccessObject<Rate> {
         try {
             String code1 = codes.substring(0, 3);
             String code2 = codes.substring(3);
-            Rate result = null;
+            Rate result;
             databaseUtils.initializeDriverForJDBC();
             String query = "SELECT * FROM exchangerates e\n" +
                     "    INNER JOIN currencies c1 on e.basecurrencyid = c1.id\n" +
@@ -89,8 +90,41 @@ public class ExchangeRatesDataAccessObject implements DataAccessObject<Rate> {
     }
 
     @Override
-    public void add(Rate rate) throws DataAccessException, CurrencyCodeAlreadyExistsException {
+    public void add(Rate rateObj) throws ExchangeRateAlreadyExistsException, DataAccessException {
+        try {
+            Currency baseCurrency = rateObj.getBaseCurrency();
+            Currency targetCurrency = rateObj.getTargetCurrency();
+            BigDecimal rate = rateObj.getRate();
 
+            databaseUtils.initializeDriverForJDBC();
+            String query = "SELECT * FROM exchangerates e\n" +
+                    "    INNER JOIN currencies c1 on e.basecurrencyid = c1.id\n" +
+                    "    INNER JOIN currencies c2 on c2.id = e.targetcurrencyid\n" +
+                    "WHERE c1.code = ? AND c2.code = ?;";
+            String requestToAddAnElement = "INSERT INTO exchangerates (baseCurrencyId, targetCurrencyId, rate) VALUES (?, ?, ?)";
+
+            try (Connection connection = databaseUtils.getConnection();
+                 PreparedStatement preparedStatement1 = connection.prepareStatement(query)) {
+
+                preparedStatement1.setString(1, baseCurrency.getCode());
+                preparedStatement1.setString(2, targetCurrency.getCode());
+
+                try(ResultSet resultSet1 = preparedStatement1.executeQuery()){
+                    if(!resultSet1.next()) {
+                        try(PreparedStatement preparedStatement2 = connection.prepareStatement(requestToAddAnElement)){
+                            preparedStatement2.setInt(1, baseCurrency.getId());
+                            preparedStatement2.setInt(2, targetCurrency.getId());
+                            preparedStatement2.setBigDecimal(3, rate);
+                            preparedStatement2.executeUpdate();
+                        }
+                    } else {
+                        throw new ExchangeRateAlreadyExistsException("A exchange rate with codes "+ baseCurrency.getCode() + ", " + targetCurrency.getCode() + " already exists");
+                    }
+                }
+            }
+        } catch (SQLException | DriverInitializationException | NoConnectionToDataBaseException e) {
+            throw new DataAccessException("Error retrieving currency", e);
+        }
     }
 
     @Override

@@ -9,5 +9,5 @@ CREATE TABLE IF NOT EXISTS ExchangeRates (
     ID               SERIAL PRIMARY KEY,
     BaseCurrencyId   INTEGER REFERENCES currencies (id),
     TargetCurrencyId INTEGER REFERENCES currencies (id),
-    Rate             DECIMAL(6) NOT NULL
+    Rate             DECIMAL NOT NULL
 );

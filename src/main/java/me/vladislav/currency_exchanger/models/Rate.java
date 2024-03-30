@@ -22,6 +22,12 @@ public class Rate {
         this.rate = rate;
     }
 
+    public Rate(Currency baseCurrency, Currency targetCurrency, BigDecimal rate) {
+        this.baseCurrency = baseCurrency;
+        this.targetCurrency = targetCurrency;
+        this.rate = rate;
+    }
+
     public int getId() {
         return id;
     }

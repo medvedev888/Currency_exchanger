@@ -126,7 +126,7 @@ public class CurrencyDataAccessObject implements DataAccessObject<Currency> {
                             preparedStatement2.executeUpdate();
                         }
                     } else {
-                        throw new CurrencyCodeAlreadyExistsException("A currency with this code already exists");
+                        throw new CurrencyCodeAlreadyExistsException("A currency with code " + code + " already exists");
                     }
                 }
             }
