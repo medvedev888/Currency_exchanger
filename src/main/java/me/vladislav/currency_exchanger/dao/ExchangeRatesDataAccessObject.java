@@ -51,7 +51,7 @@ public class ExchangeRatesDataAccessObject implements DataAccessObject<Rate> {
             return listOfRates;
         } catch (SQLException | DriverInitializationException | NoConnectionToDataBaseException |
                  CurrencyNotFoundException e) {
-            throw new DataAccessException("Error retrieving currency list", e);
+            throw new DataAccessException("Error retrieving exchange rate list", e);
         }
     }
 
@@ -85,7 +85,7 @@ public class ExchangeRatesDataAccessObject implements DataAccessObject<Rate> {
                 return result;
             }
         } catch (SQLException | DriverInitializationException | NoConnectionToDataBaseException e) {
-            throw new DataAccessException("Error retrieving currency", e);
+            throw new DataAccessException("Error retrieving exchange rate", e);
         }
     }
 
@@ -97,38 +97,83 @@ public class ExchangeRatesDataAccessObject implements DataAccessObject<Rate> {
             BigDecimal rate = rateObj.getRate();
 
             databaseUtils.initializeDriverForJDBC();
+
             String query = "SELECT * FROM exchangerates e\n" +
                     "    INNER JOIN currencies c1 on e.basecurrencyid = c1.id\n" +
                     "    INNER JOIN currencies c2 on c2.id = e.targetcurrencyid\n" +
                     "WHERE c1.code = ? AND c2.code = ?;";
             String requestToAddAnElement = "INSERT INTO exchangerates (baseCurrencyId, targetCurrencyId, rate) VALUES (?, ?, ?)";
 
-            try (Connection connection = databaseUtils.getConnection();
-                 PreparedStatement preparedStatement1 = connection.prepareStatement(query)) {
+            try (Connection connection = databaseUtils.getConnection()) {
 
-                preparedStatement1.setString(1, baseCurrency.getCode());
-                preparedStatement1.setString(2, targetCurrency.getCode());
+                connection.setAutoCommit(false);
+                try(PreparedStatement preparedStatement1 = connection.prepareStatement(query)) {
 
-                try(ResultSet resultSet1 = preparedStatement1.executeQuery()){
-                    if(!resultSet1.next()) {
-                        try(PreparedStatement preparedStatement2 = connection.prepareStatement(requestToAddAnElement)){
-                            preparedStatement2.setInt(1, baseCurrency.getId());
-                            preparedStatement2.setInt(2, targetCurrency.getId());
-                            preparedStatement2.setBigDecimal(3, rate);
-                            preparedStatement2.executeUpdate();
+                    preparedStatement1.setString(1, baseCurrency.getCode());
+                    preparedStatement1.setString(2, targetCurrency.getCode());
+
+                    try (ResultSet resultSet1 = preparedStatement1.executeQuery()) {
+                        if (!resultSet1.next()) {
+                            try (PreparedStatement preparedStatement2 = connection.prepareStatement(requestToAddAnElement)) {
+                                preparedStatement2.setInt(1, baseCurrency.getId());
+                                preparedStatement2.setInt(2, targetCurrency.getId());
+                                preparedStatement2.setBigDecimal(3, rate);
+                                preparedStatement2.executeUpdate();
+                            }
+                            connection.commit();
+                        } else {
+                            connection.rollback();
+                            throw new ExchangeRateAlreadyExistsException("A exchange rate with codes " + baseCurrency.getCode() + ", " + targetCurrency.getCode() + " already exists");
                         }
-                    } else {
-                        throw new ExchangeRateAlreadyExistsException("A exchange rate with codes "+ baseCurrency.getCode() + ", " + targetCurrency.getCode() + " already exists");
                     }
                 }
+                connection.setAutoCommit(true);
             }
         } catch (SQLException | DriverInitializationException | NoConnectionToDataBaseException e) {
-            throw new DataAccessException("Error retrieving currency", e);
+            throw new DataAccessException("Error retrieving exchange rate", e);
         }
     }
 
     @Override
-    public void update() {
+    public void update(Rate rateObj) throws DataAccessException, ExchangeRateNotFoundException {
+        try {
+            Currency baseCurrency = rateObj.getBaseCurrency();
+            Currency targetCurrency = rateObj.getTargetCurrency();
+            BigDecimal rate = rateObj.getRate();
 
+            String query = "SELECT e.id, c1.code, c2.code FROM exchangerates e\n" +
+                    "    INNER JOIN currencies c1 on e.basecurrencyid = c1.id\n" +
+                    "    INNER JOIN currencies c2 on c2.id = e.targetcurrencyid\n" +
+                    "WHERE c1.code = ? AND c2.code = ?;";
+            String requestToUpdateAnElement = "UPDATE exchangerates SET rate = ? WHERE id = ?";
+
+            databaseUtils.initializeDriverForJDBC();
+
+            try(Connection connection = databaseUtils.getConnection()){
+                connection.setAutoCommit(false);
+                try (PreparedStatement preparedStatement1 = connection.prepareStatement(query)){
+                    preparedStatement1.setString(1, baseCurrency.getCode());
+                    preparedStatement1.setString(2, targetCurrency.getCode());
+                    try (ResultSet resultSet1 = preparedStatement1.executeQuery()){
+                        if(resultSet1.next()){
+                            int id = resultSet1.getInt("id");
+                            try (PreparedStatement preparedStatement2 = connection.prepareStatement(requestToUpdateAnElement)) {
+                                preparedStatement2.setBigDecimal(1, rate);
+                                preparedStatement2.setInt(2, id);
+                                preparedStatement2.executeUpdate();
+                            }
+                            connection.commit();
+                        } else {
+                            connection.rollback();
+                            throw new ExchangeRateNotFoundException("Exchange rate " + baseCurrency.getCode() + " to " + targetCurrency.getCode() + " not found");
+                        }
+                    }
+                }
+                connection.setAutoCommit(true);
+            }
+
+        } catch (SQLException | DriverInitializationException | NoConnectionToDataBaseException e) {
+            throw new DataAccessException("Error retrieving exchange rate", e);
+        }
     }
 }

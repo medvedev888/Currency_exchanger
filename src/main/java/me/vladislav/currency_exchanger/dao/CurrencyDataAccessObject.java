@@ -114,21 +114,27 @@ public class CurrencyDataAccessObject implements DataAccessObject<Currency> {
             String query = "SELECT * FROM currencies WHERE code = ?;";
             String requestToAddAnElement = "INSERT INTO currencies (code, fullname, sign) VALUES (?, ?, ?)";
 
-            try (Connection connection = databaseUtils.getConnection();
-                 PreparedStatement preparedStatement1 = connection.prepareStatement(query)) {
-                preparedStatement1.setString(1, code);
-                try(ResultSet resultSet1 = preparedStatement1.executeQuery()){
-                    if(!resultSet1.next()) {
-                        try(PreparedStatement preparedStatement2 = connection.prepareStatement(requestToAddAnElement)){
-                            preparedStatement2.setString(1, code);
-                            preparedStatement2.setString(2, fullname);
-                            preparedStatement2.setString(3, sign);
-                            preparedStatement2.executeUpdate();
+            try (Connection connection = databaseUtils.getConnection()){
+
+                connection.setAutoCommit(false);
+                try(PreparedStatement preparedStatement1 = connection.prepareStatement(query)){
+                    preparedStatement1.setString(1, code);
+                    try(ResultSet resultSet1 = preparedStatement1.executeQuery()){
+                        if(!resultSet1.next()) {
+                            try(PreparedStatement preparedStatement2 = connection.prepareStatement(requestToAddAnElement)){
+                                preparedStatement2.setString(1, code);
+                                preparedStatement2.setString(2, fullname);
+                                preparedStatement2.setString(3, sign);
+                                preparedStatement2.executeUpdate();
+                            }
+                            connection.commit();
+                        } else {
+                            connection.rollback();
+                            throw new CurrencyCodeAlreadyExistsException("A currency with code " + code + " already exists");
                         }
-                    } else {
-                        throw new CurrencyCodeAlreadyExistsException("A currency with code " + code + " already exists");
                     }
                 }
+                connection.setAutoCommit(true);
             }
         } catch (SQLException | DriverInitializationException | NoConnectionToDataBaseException e) {
             throw new DataAccessException("Error retrieving currency", e);
@@ -136,7 +142,7 @@ public class CurrencyDataAccessObject implements DataAccessObject<Currency> {
     }
 
     @Override
-    public void update() {
+    public void update(Currency currency) {
 
     }
 

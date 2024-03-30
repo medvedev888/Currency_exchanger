@@ -48,22 +48,25 @@ public class ExchangeRatesServlet extends HttpServlet {
             String targetCurrencyCode = req.getParameter("targetCurrencyCode");
             String rateStr = req.getParameter("rate");
 
-            if(baseCurrencyCode != null && targetCurrencyCode != null && rateStr != null
-                    && baseCurrencyCode.length() == 3 && targetCurrencyCode.length() == 3){
+            if(baseCurrencyCode != null && targetCurrencyCode != null && rateStr != null && !(rateStr.contains(","))
+                    && !(rateStr.isEmpty()) && baseCurrencyCode.length() == 3 && targetCurrencyCode.length() == 3){
 
                 BigDecimal rate = new BigDecimal(rateStr);
                 exchangeRatesDataAccessObject.add(new Rate(currencyDataAccessObject.getByCode(baseCurrencyCode), currencyDataAccessObject.getByCode(targetCurrencyCode), rate));
 
-                resp.setStatus(HttpServletResponse.SC_CREATED);
-                try {
-                    String json = objectMapper.writeValueAsString(exchangeRatesDataAccessObject.getByCode(baseCurrencyCode + targetCurrencyCode));
-                    resp.getWriter().write(json);
-                } catch (CurrencyNotFoundException | ExchangeRateNotFoundException e) {
-                    resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database interaction error (" + e.getMessage() + ")");
-                }
             } else {
                 resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Incorrect input parameters, example: .../exchangeRates?baseCurrencyCode=USD&targetCurrencyCode=RUB&rate=92.4");
+                return;
             }
+
+            resp.setStatus(HttpServletResponse.SC_CREATED);
+            try {
+                String json = objectMapper.writeValueAsString(exchangeRatesDataAccessObject.getByCode(baseCurrencyCode + targetCurrencyCode));
+                resp.getWriter().write(json);
+            } catch (CurrencyNotFoundException | ExchangeRateNotFoundException e) {
+                resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database interaction error (" + e.getMessage() + ")");
+            }
+
         } catch (DataAccessException e) {
             resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database interaction error (" + e.getMessage() + ")");
         } catch (ExchangeRateAlreadyExistsException e){
