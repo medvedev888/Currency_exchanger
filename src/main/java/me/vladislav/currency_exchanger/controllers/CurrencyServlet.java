@@ -9,6 +9,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import me.vladislav.currency_exchanger.dao.CurrencyDataAccessObject;
 import me.vladislav.currency_exchanger.exceptions.CurrencyNotFoundException;
 import me.vladislav.currency_exchanger.exceptions.DataAccessException;
+import me.vladislav.currency_exchanger.exceptions.IncorrectInputException;
+import me.vladislav.currency_exchanger.utils.ValidationUtils;
 
 import java.io.IOException;
 
@@ -29,19 +31,12 @@ public class CurrencyServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String pathInfo = req.getPathInfo();
         String code;
-        if (pathInfo != null) {
-            String[] parts = pathInfo.split("/");
-            if (parts.length == 2 && parts[1].length() == 3) {
-                code = parts[1].toUpperCase();
-            } else {
-                resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Incorrect currency code in the address, example: .../currency/RUB");
-                return;
-            }
-        } else {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Incorrect currency code in the address, example: .../currency/RUB");
+        try {
+            code = ValidationUtils.validateCurrencyCodeFromPath(pathInfo);
+        } catch (IncorrectInputException e) {
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Incorrect currency code in the address, example: .../currency/RUB (" + e.getMessage() + ")");
             return;
         }
-
         try {
             String json = objectMapper.writeValueAsString(currencyDataAccessObject.getByCode(code));
             resp.getWriter().write(json);

@@ -11,14 +11,12 @@ import java.util.List;
 
 public class CurrencyDataAccessObject implements DataAccessObject<Currency> {
     private BasicDataSource dataSource;
-    private DatabaseUtils databaseUtils;
 
     public CurrencyDataAccessObject(String url, String username, String password) {
         dataSource = new BasicDataSource();
         dataSource.setUrl(url);
         dataSource.setUsername(username);
         dataSource.setPassword(password);
-        databaseUtils = new DatabaseUtils(dataSource);
     }
 
     @Override
@@ -26,9 +24,9 @@ public class CurrencyDataAccessObject implements DataAccessObject<Currency> {
         try {
             List<Currency> listOfCurrencies = new ArrayList<>();
             String query = "SELECT * FROM currencies;";
-            databaseUtils.initializeDriverForJDBC();
+            DatabaseUtils.initializeDriverForJDBC();
 
-            try (Connection connection = databaseUtils.getConnection();
+            try (Connection connection = DatabaseUtils.getConnection(dataSource);
                  PreparedStatement preparedStatement = connection.prepareStatement(query);
                  ResultSet resultSet = preparedStatement.executeQuery()) {
 
@@ -50,10 +48,10 @@ public class CurrencyDataAccessObject implements DataAccessObject<Currency> {
     public Currency getById(int id) throws DataAccessException, CurrencyNotFoundException {
         try {
             Currency result;
-            databaseUtils.initializeDriverForJDBC();
+            DatabaseUtils.initializeDriverForJDBC();
             String query = "SELECT * FROM currencies WHERE id = ?;";
 
-            try (Connection connection = databaseUtils.getConnection();
+            try (Connection connection = DatabaseUtils.getConnection(dataSource);
                  PreparedStatement preparedStatement = connection.prepareStatement(query)) {
                 preparedStatement.setInt(1, id);
                 try(ResultSet resultSet = preparedStatement.executeQuery()) {
@@ -78,10 +76,10 @@ public class CurrencyDataAccessObject implements DataAccessObject<Currency> {
     public Currency getByCode(String code) throws DataAccessException, CurrencyNotFoundException {
         try {
             Currency result;
-            databaseUtils.initializeDriverForJDBC();
+            DatabaseUtils.initializeDriverForJDBC();
             String query = "SELECT * FROM currencies WHERE code = ?;";
 
-            try (Connection connection = databaseUtils.getConnection();
+            try (Connection connection = DatabaseUtils.getConnection(dataSource);
                  PreparedStatement preparedStatement = connection.prepareStatement(query)) {
                 preparedStatement.setString(1, code);
                 try(ResultSet resultSet = preparedStatement.executeQuery()) {
@@ -110,11 +108,11 @@ public class CurrencyDataAccessObject implements DataAccessObject<Currency> {
             String fullname = currency.getFullName();
             String sign = currency.getSign();
 
-            databaseUtils.initializeDriverForJDBC();
+            DatabaseUtils.initializeDriverForJDBC();
             String query = "SELECT * FROM currencies WHERE code = ?;";
             String requestToAddAnElement = "INSERT INTO currencies (code, fullname, sign) VALUES (?, ?, ?)";
 
-            try (Connection connection = databaseUtils.getConnection()){
+            try (Connection connection = DatabaseUtils.getConnection(dataSource)){
 
                 connection.setAutoCommit(false);
                 try(PreparedStatement preparedStatement1 = connection.prepareStatement(query)){

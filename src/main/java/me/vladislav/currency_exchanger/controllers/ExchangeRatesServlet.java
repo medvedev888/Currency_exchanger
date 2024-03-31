@@ -12,6 +12,7 @@ import me.vladislav.currency_exchanger.dao.ExchangeRatesDataAccessObject;
 import me.vladislav.currency_exchanger.exceptions.*;
 import me.vladislav.currency_exchanger.models.Currency;
 import me.vladislav.currency_exchanger.models.Rate;
+import me.vladislav.currency_exchanger.utils.ValidationUtils;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -47,18 +48,21 @@ public class ExchangeRatesServlet extends HttpServlet {
             String baseCurrencyCode = req.getParameter("baseCurrencyCode");
             String targetCurrencyCode = req.getParameter("targetCurrencyCode");
             String rateStr = req.getParameter("rate");
+            BigDecimal rate;
 
-            if(baseCurrencyCode != null && targetCurrencyCode != null && rateStr != null && !(rateStr.contains(","))
-                    && !(rateStr.isEmpty()) && baseCurrencyCode.length() == 3 && targetCurrencyCode.length() == 3){
-
-                BigDecimal rate = new BigDecimal(rateStr);
-                exchangeRatesDataAccessObject.add(new Rate(currencyDataAccessObject.getByCode(baseCurrencyCode), currencyDataAccessObject.getByCode(targetCurrencyCode), rate));
-
+            if(ValidationUtils.isValidCode(baseCurrencyCode) && ValidationUtils.isValidCode(targetCurrencyCode)){
+                try {
+                    rate = ValidationUtils.validateRateString(rateStr);
+                } catch (IncorrectInputException e) {
+                    resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Incorrect input parameters, example: .../exchangeRates?baseCurrencyCode=USD&targetCurrencyCode=RUB&rate=92.4 (" + e.getMessage() + ")");
+                    return;
+                }
             } else {
                 resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Incorrect input parameters, example: .../exchangeRates?baseCurrencyCode=USD&targetCurrencyCode=RUB&rate=92.4");
                 return;
             }
 
+            exchangeRatesDataAccessObject.add(new Rate(currencyDataAccessObject.getByCode(baseCurrencyCode), currencyDataAccessObject.getByCode(targetCurrencyCode), rate));
             resp.setStatus(HttpServletResponse.SC_CREATED);
             try {
                 String json = objectMapper.writeValueAsString(exchangeRatesDataAccessObject.getByCode(baseCurrencyCode + targetCurrencyCode));
@@ -66,7 +70,6 @@ public class ExchangeRatesServlet extends HttpServlet {
             } catch (CurrencyNotFoundException | ExchangeRateNotFoundException e) {
                 resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database interaction error (" + e.getMessage() + ")");
             }
-
         } catch (DataAccessException e) {
             resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database interaction error (" + e.getMessage() + ")");
         } catch (ExchangeRateAlreadyExistsException e){

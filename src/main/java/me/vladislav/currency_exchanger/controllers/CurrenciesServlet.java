@@ -11,6 +11,7 @@ import me.vladislav.currency_exchanger.exceptions.CurrencyCodeAlreadyExistsExcep
 import me.vladislav.currency_exchanger.exceptions.CurrencyNotFoundException;
 import me.vladislav.currency_exchanger.exceptions.DataAccessException;
 import me.vladislav.currency_exchanger.models.Currency;
+import me.vladislav.currency_exchanger.utils.ValidationUtils;
 
 import java.io.IOException;
 
@@ -40,11 +41,12 @@ public class CurrenciesServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
-            String fullname = req.getParameter("fullname");
+            String fullName = req.getParameter("fullname");
             String code = req.getParameter("code");
             String sign = req.getParameter("sign");
-            if(fullname != null && code != null && sign != null && code.length() == 3){
-                currencyDataAccessObject.add(new Currency(code, fullname, sign));
+
+            if(ValidationUtils.isValidCode(code) && ValidationUtils.isValidFullName(fullName) && ValidationUtils.isValidSign(sign)){
+                currencyDataAccessObject.add(new Currency(code, fullName, sign));
                 resp.setStatus(HttpServletResponse.SC_CREATED);
                 try {
                     String json = objectMapper.writeValueAsString(currencyDataAccessObject.getByCode(code));
@@ -55,6 +57,7 @@ public class CurrenciesServlet extends HttpServlet {
             } else {
                 resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Incorrect input parameters, example: .../currencies?fullname=Russian Ruble&code=RUB&sign=₽");
             }
+
         } catch (DataAccessException e) {
             resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database interaction error (" + e.getMessage() + ")");
         } catch (CurrencyCodeAlreadyExistsException e){

@@ -16,7 +16,6 @@ import java.util.List;
 
 public class ExchangeRatesDataAccessObject implements DataAccessObject<Rate> {
     private BasicDataSource dataSource;
-    private DatabaseUtils databaseUtils;
     private CurrencyDataAccessObject currencyDataAccessObject;
 
     public ExchangeRatesDataAccessObject(String url, String username, String password) {
@@ -24,7 +23,6 @@ public class ExchangeRatesDataAccessObject implements DataAccessObject<Rate> {
         dataSource.setUrl(url);
         dataSource.setUsername(username);
         dataSource.setPassword(password);
-        databaseUtils = new DatabaseUtils(dataSource);
         currencyDataAccessObject = new CurrencyDataAccessObject(url, username, password);
     }
 
@@ -34,9 +32,9 @@ public class ExchangeRatesDataAccessObject implements DataAccessObject<Rate> {
         try {
             List<Rate> listOfRates = new ArrayList<>();
             String query = "SELECT * FROM exchangerates;";
-            databaseUtils.initializeDriverForJDBC();
+            DatabaseUtils.initializeDriverForJDBC();
 
-            try (Connection connection = databaseUtils.getConnection();
+            try (Connection connection = DatabaseUtils.getConnection(dataSource);
                  PreparedStatement preparedStatement = connection.prepareStatement(query);
                  ResultSet resultSet = preparedStatement.executeQuery()) {
 
@@ -61,13 +59,13 @@ public class ExchangeRatesDataAccessObject implements DataAccessObject<Rate> {
             String code1 = codes.substring(0, 3);
             String code2 = codes.substring(3);
             Rate result;
-            databaseUtils.initializeDriverForJDBC();
+            DatabaseUtils.initializeDriverForJDBC();
             String query = "SELECT * FROM exchangerates e\n" +
                     "    INNER JOIN currencies c1 on e.basecurrencyid = c1.id\n" +
                     "    INNER JOIN currencies c2 on c2.id = e.targetcurrencyid\n" +
                     "WHERE c1.code = ? AND c2.code = ?;";
 
-            try (Connection connection = databaseUtils.getConnection();
+            try (Connection connection = DatabaseUtils.getConnection(dataSource);
                  PreparedStatement preparedStatement = connection.prepareStatement(query)) {
                 preparedStatement.setString(1, code1);
                 preparedStatement.setString(2, code2);
@@ -96,7 +94,7 @@ public class ExchangeRatesDataAccessObject implements DataAccessObject<Rate> {
             Currency targetCurrency = rateObj.getTargetCurrency();
             BigDecimal rate = rateObj.getRate();
 
-            databaseUtils.initializeDriverForJDBC();
+            DatabaseUtils.initializeDriverForJDBC();
 
             String query = "SELECT * FROM exchangerates e\n" +
                     "    INNER JOIN currencies c1 on e.basecurrencyid = c1.id\n" +
@@ -104,7 +102,7 @@ public class ExchangeRatesDataAccessObject implements DataAccessObject<Rate> {
                     "WHERE c1.code = ? AND c2.code = ?;";
             String requestToAddAnElement = "INSERT INTO exchangerates (baseCurrencyId, targetCurrencyId, rate) VALUES (?, ?, ?)";
 
-            try (Connection connection = databaseUtils.getConnection()) {
+            try (Connection connection = DatabaseUtils.getConnection(dataSource)) {
 
                 connection.setAutoCommit(false);
                 try(PreparedStatement preparedStatement1 = connection.prepareStatement(query)) {
@@ -147,9 +145,9 @@ public class ExchangeRatesDataAccessObject implements DataAccessObject<Rate> {
                     "WHERE c1.code = ? AND c2.code = ?;";
             String requestToUpdateAnElement = "UPDATE exchangerates SET rate = ? WHERE id = ?";
 
-            databaseUtils.initializeDriverForJDBC();
+            DatabaseUtils.initializeDriverForJDBC();
 
-            try(Connection connection = databaseUtils.getConnection()){
+            try(Connection connection = DatabaseUtils.getConnection(dataSource)){
                 connection.setAutoCommit(false);
                 try (PreparedStatement preparedStatement1 = connection.prepareStatement(query)){
                     preparedStatement1.setString(1, baseCurrency.getCode());
