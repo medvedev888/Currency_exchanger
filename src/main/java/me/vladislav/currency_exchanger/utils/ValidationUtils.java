@@ -36,10 +36,10 @@ public class ValidationUtils {
         }
     }
 
-    public static BigDecimal validateRateString(String rateStr) throws IncorrectInputException {
-        if(rateStr != null && !(rateStr.isEmpty())) {
-            if(!(rateStr.contains(","))) {
-                return new BigDecimal(rateStr);
+    public static BigDecimal validateDecimalParameterString(String decimalStr) throws IncorrectInputException {
+        if(decimalStr != null && !(decimalStr.isEmpty()) && new BigDecimal(decimalStr).compareTo(BigDecimal.ZERO) != 0) {
+            if(!(decimalStr.contains(","))) {
+                return new BigDecimal(decimalStr);
             } else {
                 throw new IncorrectInputException("incorrect format of rate");
             }

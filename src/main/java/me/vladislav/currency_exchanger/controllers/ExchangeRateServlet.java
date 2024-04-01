@@ -73,7 +73,7 @@ public class ExchangeRateServlet extends HttpServlet {
         try {
             try {
                 codes = ValidationUtils.validateCurrencyCodesFromPath(pathInfo);
-                rate = ValidationUtils.validateRateString(rateStr);
+                rate = ValidationUtils.validateDecimalParameterString(rateStr);
             } catch (IncorrectInputException e) {
                 resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Incorrect input parameters, example: .../exchangeRate/USDRUB?rate=93.5 (" + e.getMessage() + ")");
                 return;

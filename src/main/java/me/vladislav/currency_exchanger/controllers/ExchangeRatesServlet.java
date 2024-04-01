@@ -52,7 +52,7 @@ public class ExchangeRatesServlet extends HttpServlet {
 
             if(ValidationUtils.isValidCode(baseCurrencyCode) && ValidationUtils.isValidCode(targetCurrencyCode)){
                 try {
-                    rate = ValidationUtils.validateRateString(rateStr);
+                    rate = ValidationUtils.validateDecimalParameterString(rateStr);
                 } catch (IncorrectInputException e) {
                     resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Incorrect input parameters, example: .../exchangeRates?baseCurrencyCode=USD&targetCurrencyCode=RUB&rate=92.4 (" + e.getMessage() + ")");
                     return;
