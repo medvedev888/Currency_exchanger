@@ -18,14 +18,13 @@ public class ExchangeRatesDataAccessObject implements DataAccessObject<Rate> {
     private BasicDataSource dataSource;
     private CurrencyDataAccessObject currencyDataAccessObject;
 
-    public ExchangeRatesDataAccessObject(String url, String username, String password) {
+    public ExchangeRatesDataAccessObject(String url, String username, String password, CurrencyDataAccessObject currencyDataAccessObject) {
         dataSource = new BasicDataSource();
         dataSource.setUrl(url);
         dataSource.setUsername(username);
         dataSource.setPassword(password);
-        currencyDataAccessObject = new CurrencyDataAccessObject(url, username, password);
+        this.currencyDataAccessObject = currencyDataAccessObject;
     }
-
 
     @Override
     public List<Rate> getList() throws DataAccessException {

@@ -2,6 +2,8 @@ package me.vladislav.currency_exchanger.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,14 +19,16 @@ import java.io.IOException;
 
 @WebServlet(value = "/currencies")
 public class CurrenciesServlet extends HttpServlet {
-    private final CurrencyDataAccessObject currencyDataAccessObject;
-    private final ObjectMapper objectMapper;
+    private CurrencyDataAccessObject currencyDataAccessObject;
+    private ObjectMapper objectMapper;
 
-    public CurrenciesServlet() {
-        // данные для подключения к БД - временная заглушка
-        this.currencyDataAccessObject = new CurrencyDataAccessObject("jdbc:postgresql://localhost:5432/currency_exchanger", "vladislavmedvedev", "");
-        this.objectMapper = new ObjectMapper();
-        this.objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+    @Override
+    public void init() throws ServletException {
+        super.init();
+        ServletContext context = getServletContext();
+        currencyDataAccessObject = (CurrencyDataAccessObject) context.getAttribute("currencyDataAccessObject");
+        objectMapper = new ObjectMapper();
+        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
     }
 
     @Override

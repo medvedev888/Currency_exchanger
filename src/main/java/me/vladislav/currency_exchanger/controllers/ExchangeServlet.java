@@ -2,6 +2,8 @@ package me.vladislav.currency_exchanger.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,16 +26,18 @@ import java.math.RoundingMode;
 
 @WebServlet(value = "/exchange")
 public class ExchangeServlet extends HttpServlet {
-    private final ExchangeRatesDataAccessObject exchangeRatesDataAccessObject;
-    private final CurrencyDataAccessObject currencyDataAccessObject;
-    private final ObjectMapper objectMapper;
+    private  ExchangeRatesDataAccessObject exchangeRatesDataAccessObject;
+    private  ObjectMapper objectMapper;
+    private  CurrencyDataAccessObject currencyDataAccessObject;
 
-    public ExchangeServlet() {
-        // данные для подключения к БД - временная заглушка
-        this.exchangeRatesDataAccessObject = new ExchangeRatesDataAccessObject("jdbc:postgresql://localhost:5432/currency_exchanger", "vladislavmedvedev", "");
-        this.currencyDataAccessObject = new CurrencyDataAccessObject("jdbc:postgresql://localhost:5432/currency_exchanger", "vladislavmedvedev", "");
-        this.objectMapper = new ObjectMapper();
-        this.objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+    @Override
+    public void init() throws ServletException {
+        super.init();
+        ServletContext context = getServletContext();
+        exchangeRatesDataAccessObject = (ExchangeRatesDataAccessObject) getServletContext().getAttribute("exchangeRatesDataAccessObject");
+        currencyDataAccessObject = (CurrencyDataAccessObject) context.getAttribute("currencyDataAccessObject");
+        objectMapper = new ObjectMapper();
+        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
     }
 
     @Override
